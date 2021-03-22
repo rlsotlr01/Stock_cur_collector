@@ -2,6 +2,7 @@ import sys
 from PyQt5.QtWidgets import *
 import win32com.client
 import sqlite3
+import time
 
 # 복수 종목 실시간 조회 샘플 (조회는 없고 실시간만 있음)
 class CpEvent:
@@ -14,19 +15,40 @@ class CpEvent:
     def OnReceived(self):
         conn = sqlite3.connect("stock_price(cur).db", isolation_level=None)
 
-
         code = self.client.GetHeaderValue(0)  # 초
         name = self.client.GetHeaderValue(1)  # 초
-        timess = self.client.GetHeaderValue(18)  # 초
+        timess1 = time.strftime('%Y%m%d')
+        timess = timess1+self.client.GetHeaderValue(18)  # 년월일시분초
+        cur_price = self.client.GetHeaderValue(4)
+        high_price = self.client.GetHeaderValue(5)
+        low_price = self.client.GetHeaderValue(6)
+        sell_call = self.client.GetHeaderValue(7)
+        buy_call = self.client.GetHeaderValue(8)
+        acc_vol = self.client.GetHeaderValue(9)
+        pred_price = self.client.GetHeaderValue(13)  # 현재가
+        deal_state = self.client.GetHeaderValue(14)
+        acc_sell_deal_vol = self.client.GetHeaderValue(15)
+        acc_buy_deal_vol = self.client.GetHeaderValue(16)
+        moment_deal_vol = self.client.GetHeaderValue(17)
+        exp_price_com_flag = self.client.GetHeaderValue(19)
+        market_diff_flag = self.client.GetHeaderValue(20)
+        market_oot_vol = self.client.GetHeaderValue(21)
+        acc_call_sell_deal_vol = self.client.GetHeaderValue(27)
+        acc_call_buy_deal_vol = self.client.GetHeaderValue(28)
+
+        # 일도 넣으면 좋을듯. 일에다가 timess 을 더해서 시간데이터로 하자.
         exFlag = self.client.GetHeaderValue(19)  # 예상체결 플래그
-        cprice = self.client.GetHeaderValue(13)  # 현재가
+
         diff = self.client.GetHeaderValue(2)  # 대비
         cVol = self.client.GetHeaderValue(17)  # 순간체결수량
         vol = self.client.GetHeaderValue(9)  # 거래량
-        print("코드코드:",code)
         c = conn.cursor()
         c.execute("CREATE TABLE IF NOT EXISTS " + code +
                   "(COMPNAME text, PRICE integer, TIME text, DIFF integer, BUYNUM integer, BUYNUM_ACC integer)")
+        # 여기에 필요한 데이터에 따라 컬럼명 변경
+        # 컬럼명 바꿔줘야 함.
+        # time 은 무조건
+
         sql_sent = "INSERT OR IGNORE INTO " + code + " VALUES( ?, ?, ?, ?, ?, ?)"
         print(sql_sent)
         self.cnt2 += 1
@@ -35,14 +57,18 @@ class CpEvent:
 
             #c.execute("CREATE TABLE IF NOT EXISTS BUYING_NUM "
             #          "(COMPNAME text, TIME text, PRICE integer, DIFF integer, BUYNUM integer, BUYNUM_ACC integer)")
-            print("실시간(예상체결)", name, timess, "*", cprice, "대비", diff, "체결량", cVol, "거래량", vol, "데이터개수", self.cnt2)
+            print("실시간(예상체결)", name, timess, "*", cur_price, "대비", diff, "체결량", cVol, "거래량", vol, "데이터개수", self.cnt2)
+            print(timess)
 
-            c.execute(sql_sent, (name, timess, cprice, diff, cVol, vol))
+            c.execute(sql_sent, (name, timess, cur_price, diff, cVol, vol))
+            # 여기도
 
         elif (exFlag == ord('2')):  # 장중(체결)
-            print("실시간(장중 체결)", name, timess, cprice, "대비", diff, "체결량", cVol, "거래량", vol, "데이터개수", self.cnt2)
+            print(timess)
+            print("실시간(장중 체결)", name, timess, cur_price, "대비", diff, "체결량", cVol, "거래량", vol, "데이터개수", self.cnt2)
             c.execute(sql_sent,
-                      (name, timess, cprice, diff, cVol, vol))
+                      (name, timess, cur_price, diff, cVol, vol))
+            # 여기다가 넣을거 추가해야 함.
 
 class CpStockCur:
     def Subscribe(self, code):
@@ -99,7 +125,7 @@ class MyWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        conn = sqlite3.connect("buying_num.db", isolation_level=None)
+        conn = sqlite3.connect("stock_price(cur).db", isolation_level=None)
         # c = conn.cursor()
         self.setWindowTitle("PLUS API TEST")
         self.setGeometry(300, 300, 300, 150)
@@ -132,9 +158,20 @@ class MyWindow(QMainWindow):
         self.StopSubscribe();
 
         # 요청 종목 배열
-        codes = ["A009970", "A302440", "A005930", "A000810", "A032830", "A035420"]
+        conn = sqlite3.connect("stock_price(cur).db", isolation_level=None)
+        c = conn.cursor()
+        c.execute("select code from code_name")
+        codes = c.fetchall()
+        # c.fetchall 의 데이터타입은 list
+        codes_list = []
+        for code in codes:
+            codes_list.append(code[0])
+        # 위에는 DB에서 종목코드 가져오는 코딩. 제대로 작동함.
+        codes = codes_list # 모든 종목코드를 담음.
+
         # 이거 db에서 가져올까?
         # 요청 필드 배열 - 종목코드, 시간, 대비부호 대비, 현재가, 거래량, 종목명
+
         rqField = [0, 1, 2, 3, 4, 10, 17]  # 요청 필드
         objMarkeyeye = CpMarketEye()
         if (objMarkeyeye.Request(codes, rqField) == False):
