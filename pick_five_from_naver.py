@@ -11,6 +11,25 @@ from bs4 import BeautifulSoup
 import os
 import glob
 
+# 업종별 이름과 사이트 가져오는 라이브러리
+##### 업종별 이름, 사이트 다 모으기.
+def collect_links_of_each_field():
+    # 크롬드라이버가 연결되어 있는 주소 저장
+    chromedriver = 'C:\chromedriver_win32\chromedriver.exe'
+    # 크롬드라이버 연결
+    driver = webdriver.Chrome(chromedriver)
+    # 업종 사이트 연결
+    driver.get('https://finance.naver.com/sise/sise_group.nhn?type=upjong')
+    # 업종의 tbody에는 업종별로 사이트를 저장하는 a태그들이 있다. 그것을 꺼낸다.
+    a_tags = driver.find_element_by_tag_name('tbody').find_elements_by_tag_name('a')
+    category_list = []
+    # 업종의 주소와 이름을 저장
+    for a in a_tags:
+        category_list.append([a.get_attribute('href'), a.text])
+    # 구글 드라이버를 꼭 닫아주기.
+    driver.close()
+    return category_list
+
 # 네이버 증권 홈페이지에서 한 업종페이지의 url을 받아 데이터를 수집하는 함수.
 # 업종명과 판다스데이터프레임을 출력해준다.
 def collect_data_from_naver(url):
@@ -66,7 +85,7 @@ def collect_data_from_naver(url):
     reg_date = [] # 상장일
     class__ = []
     # 이제 해당 링크를 타고 가서 종목코드와 상장일을 가져온다.
-    count=0
+
     industrial_field_xpath = '//*[@id="contentarea_left"]/table/tbody/tr[4]/td[1]'
     industrial_field = driver.find_element_by_xpath(industrial_field_xpath).text
 
@@ -189,16 +208,23 @@ def selecting_with_conditions(year, kospi_or_kosdaq, how_many_comp):
     #   ex) how_many_comp = 5 : 상위 5개
 
 
+
+category_list = collect_links_of_each_field()
+# 카테고리명과 카테고리별 링크를 담아준다.
+# ex ) [https://www.f~~~~, 반도체및반도체장비] ... 이런 식으로
+category_links = []
+for category in category_list:
+    category_links.append(category[0])
+
 # 업종별 url 가져오는 기능도 만들어주기.
 url = 'https://finance.naver.com/sise/sise_group_detail.nhn?type=upjong&no=202'
-
-industrial_field, pd_data = collect_data_from_naver(url)
+for url in category_links:
+    industrial_field, pd_data = collect_data_from_naver(url)
 # 해당 url에 들어가 데이터를 수집하고, 업종명과 해당 업종들의 종목정보가 담긴 판다스데이터프레임 산출해준다.
-store_total_data(industrial_field, pd_data)
-# 업종명과 판다스데이터프레임을 통해 csv 파일을 만들어준다.
-selecting_with_conditions(10,'kospi',5)
-# 10년 이상, kospi 이고, 시총 상위 5개 기업을 가져온다.
-
+    store_total_data(industrial_field, pd_data)
+    # 업종명과 판다스데이터프레임을 통해 csv 파일을 만들어준다.
+    selecting_with_conditions(10,'kospi',5)
+    # 10년 이상, kospi 이고, 시총 상위 5개 기업을 가져온다.
 
 # 조건처리의 경우는 data 라는 폴더 안에 있는 ~~~전체 로 되어 있는 csv 파일을 모두 불러와서,
 # 조건처리 하고, 업종 값으로 다시 저장하는 메소드를 만들면 좋을 것 같음.
