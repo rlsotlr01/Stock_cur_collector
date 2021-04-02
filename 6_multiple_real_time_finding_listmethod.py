@@ -18,7 +18,7 @@ class CpEvent:
         code = self.client.GetHeaderValue(0)  # 초
         name = self.client.GetHeaderValue(1)  # 초
         timess1 = time.strftime('%Y%m%d')
-        timess = timess1+self.client.GetHeaderValue(18)  # 년월일시분초
+        timess = timess1+str(self.client.GetHeaderValue(18))  # 년월일시분초
         cur_price = self.client.GetHeaderValue(4)
         high_price = self.client.GetHeaderValue(5)
         low_price = self.client.GetHeaderValue(6)
@@ -164,11 +164,16 @@ class MyWindow(QMainWindow):
         codes = c.fetchall()
         # c.fetchall 의 데이터타입은 list
         codes_list = []
+        count11 = 0
         for code in codes:
+            count11 += 1
             codes_list.append(code[0])
+            if count11>199 :
+                break
+        # 실시간데이터는 199개까지로 제한. 200개 부턴 안됨.
+
         # 위에는 DB에서 종목코드 가져오는 코딩. 제대로 작동함.
         codes = codes_list # 모든 종목코드를 담음.
-
         # 이거 db에서 가져올까?
         # 요청 필드 배열 - 종목코드, 시간, 대비부호 대비, 현재가, 거래량, 종목명
 
@@ -195,6 +200,7 @@ class MyWindow(QMainWindow):
 
 
 if __name__ == "__main__":
+
     app = QApplication(sys.argv)
     myWindow = MyWindow()
     myWindow.show()
