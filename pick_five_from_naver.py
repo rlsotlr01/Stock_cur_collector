@@ -207,6 +207,8 @@ def selecting_with_conditions(year, kospi_or_kosdaq, how_many_comp):
     )
     #   ex) how_many_comp = 5 : 상위 5개
 
+# 모든 업종별 종목정보 csv 저장하고, 
+# 각 업종별 조건에 맞는 데이터만 뽑아서 또 csv로 저장해주는 모듈
 def collecting_all():
     category_list = collect_links_of_each_field()
     # 카테고리명과 카테고리별 링크를 담아준다.
