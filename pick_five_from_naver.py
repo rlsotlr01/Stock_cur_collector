@@ -172,39 +172,39 @@ def selecting_with_conditions(year, kospi_or_kosdaq, how_many_comp):
         data = pd.read_csv(csv_file)
         industrial_field_name = csv_file[13:-6]
 
-    # 데이터 전처리하기
-    # 1.날짜 문자열을 날짜데이터로 바꿔준다.
-    data['reg_day'] = pd.to_datetime(data['reg_day'])
-    reg_day = pd.to_datetime(data['reg_day'])
+        # 데이터 전처리하기
+        # 1.날짜 문자열을 날짜데이터로 바꿔준다.
+        data['reg_day'] = pd.to_datetime(data['reg_day'])
+        reg_day = pd.to_datetime(data['reg_day'])
 
-    # 2. 시가총액 문자열을 정수로 바꿔준다.
-    data['market_cap'] = data['market_cap'].astype('int')
-    market_cap = data['market_cap']
+        # 2. 시가총액 문자열을 정수로 바꿔준다.
+        data['market_cap'] = data['market_cap'].astype('int')
+        market_cap = data['market_cap']
 
-    # boolean 하나하나 만들어서 마지막에 불리언 인덱싱 하기.
+        # boolean 하나하나 만들어서 마지막에 불리언 인덱싱 하기.
 
 
-    # 1. 설립한지 ?년(year) 이상 되었는지
-    # 설립일을 담아준다.
+        # 1. 설립한지 ?년(year) 이상 되었는지
+        # 설립일을 담아준다.
 
-    # 현재 날짜와 설립일 사이의 날짜 차이를 구한다.
-    day_diff = datetime.now() - reg_day
-    days = day_diff.dt.days # 일수만 뽑아준다
-    days_boolean = days > 365*year # ?년 이상 된 기업만 가져온다.
+        # 현재 날짜와 설립일 사이의 날짜 차이를 구한다.
+        day_diff = datetime.now() - reg_day
+        days = day_diff.dt.days # 일수만 뽑아준다
+        days_boolean = days > 365*year # ?년 이상 된 기업만 가져온다.
 
-    # kospi인지 kosdaq인지
-    kos_boolean = (data['class']==kospi_or_kosdaq)
+        # kospi인지 kosdaq인지
+        kos_boolean = (data['class']==kospi_or_kosdaq)
 
-    # 시가총액 상위 몇개의 기업을 가져올 것인지
-    collected_data = data[days_boolean & kos_boolean]
-    top_companies = collected_data.sort_values(by='market_cap', ascending=False).head(how_many_comp)
-    base = './naver_data'
-    filename = '/' + industrial_field_name + '.csv'
-    # 반도체및반도체장비.csv 이런 식으로 저장해준다.
-    top_companies.to_csv(
-        base+filename
-        , encoding='utf-8'
-    )
+        # 시가총액 상위 몇개의 기업을 가져올 것인지
+        collected_data = data[days_boolean & kos_boolean]
+        top_companies = collected_data.sort_values(by='market_cap', ascending=False).head(how_many_comp)
+        base = './naver_data'
+        filename = '/' + industrial_field_name + '.csv'
+        # 반도체및반도체장비.csv 이런 식으로 저장해준다.
+        top_companies.to_csv(
+            base+filename
+            , encoding='utf-8'
+        )
     #   ex) how_many_comp = 5 : 상위 5개
 
 # 모든 업종별 종목정보 csv 저장하고, 
@@ -223,8 +223,8 @@ def collecting_all():
         # 해당 url에 들어가 데이터를 수집하고, 업종명과 해당 업종들의 종목정보가 담긴 판다스데이터프레임 산출해준다.
         store_total_data(industrial_field, pd_data)
         # 업종명과 판다스데이터프레임을 통해 csv 파일을 만들어준다.
-        selecting_with_conditions(10, 'kospi', 5)
-        # 10년 이상, kospi 이고, 시총 상위 5개 기업을 가져온다.
+
+    # naver_data 폴더를 읽고 각각 종목의 10년 이상, kospi 이고, 시총 상위 5개 기업을 가져온다.
 
     # 조건처리의 경우는 data 라는 폴더 안에 있는 ~~~전체 로 되어 있는 csv 파일을 모두 불러와서,
     # 조건처리 하고, 업종 값으로 다시 저장하는 메소드를 만들면 좋을 것 같음.
@@ -234,15 +234,16 @@ def collecting_all():
 # ex ) [https://www.f~~~~, 반도체및반도체장비] ... 이런 식으로
 
 
-# 반도체만 가져오기
-url = 'https://finance.naver.com/sise/sise_group_detail.nhn?type=upjong&no=202'
-industrial_field, pd_data = collect_data_from_naver(url)
-# 해당 url에 들어가 데이터를 수집하고, 업종명과 해당 업종들의 종목정보가 담긴 판다스데이터프레임 산출해준다.
-store_total_data(industrial_field, pd_data)
-# 업종명과 판다스데이터프레임을 통해 csv 파일을 만들어준다.
-selecting_with_conditions(10,'kospi',5)
-# 10년 이상, kospi 이고, 시총 상위 5개 기업을 가져온다.
+# # 반도체만 가져오기
+# url = 'https://finance.naver.com/sise/sise_group_detail.nhn?type=upjong&no=202'
+# industrial_field, pd_data = collect_data_from_naver(url)
+# # 해당 url에 들어가 데이터를 수집하고, 업종명과 해당 업종들의 종목정보가 담긴 판다스데이터프레임 산출해준다.
+# store_total_data(industrial_field, pd_data)
+# # 업종명과 판다스데이터프레임을 통해 csv 파일을 만들어준다.
+# selecting_with_conditions(10,'kospi',5)
+# # 10년 이상, kospi 이고, 시총 상위 5개 기업을 가져온다.
 
 
 # 모든 업종별 조건처리 맞는 데이터들 가져오기
-# collecting_all()
+#collecting_all()
+selecting_with_conditions(10, 'kospi', 5)
