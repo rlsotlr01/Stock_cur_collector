@@ -165,14 +165,16 @@ class MyWindow(QMainWindow):
         #codes = c.fetchall()
         # c.fetchall 의 데이터타입은 list
         codes_list = []
-        data = pd.read_csv('./naver_data/반도체와반도체장비.csv')
-        codes = list(data['code'])
-        #count11 = 0
-        for code in codes:
-            #count11 += 1
-            codes_list.append(code)
-            #if count11>199 :
-            #    break
+        csv_files = ['./naver_data/가정용기기와용품.csv', './naver_data/기계.csv','./naver_data/반도체와반도체장비.csv'
+            , './naver_data/자동차.csv','./naver_data/자동차부품.csv']
+        # 추가할 csv 파일을 넣어준다.
+
+        for csv_file in csv_files:
+            # 각각의 csv 파일을 읽으며 code 를 담는다.
+            data = pd.read_csv(csv_file)
+            for code in list(data['code']):
+                codes_list.append(code)
+
         # 실시간데이터는 199개까지로 제한. 200개 부턴 안됨.
         # 위에는 DB에서 종목코드 가져오는 코딩. 제대로 작동함.
         codes = codes_list # 모든 종목코드를 담음.

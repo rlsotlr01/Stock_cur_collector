@@ -28,7 +28,8 @@ def collect_links_of_each_field():
         category_list.append([a.get_attribute('href'), a.text])
     # 구글 드라이버를 꼭 닫아주기.
     driver.close()
-    return category_list
+    category_list_pd = pd.DataFrame(category_list, columns=['link','name'])
+    return category_list_pd
 
 # 네이버 증권 홈페이지에서 한 업종페이지의 url을 받아 데이터를 수집하는 함수.
 # 업종명과 판다스데이터프레임을 출력해준다.
@@ -164,7 +165,7 @@ def string_to_date(string):
 datetime.now() # 현재시간에서 설립일 빼줘서 3650일 이상
 # 2. 코스피인가
 # 세 조건 모두 만족하는 시가총액 상위 5개를 뽑기
-def selecting_with_conditions(year, kospi_or_kosdaq, how_many_comp):
+def selecting_with_conditions(year,  how_many_comp, kospi_or_kosdaq=None):
     csv_files = glob.glob('./naver_data/*전체.csv')
     for csv_file in csv_files:
         # ./naver_data\\반도체와반도체장비전체.csv 
@@ -193,7 +194,10 @@ def selecting_with_conditions(year, kospi_or_kosdaq, how_many_comp):
         days_boolean = days > 365*year # ?년 이상 된 기업만 가져온다.
 
         # kospi인지 kosdaq인지
-        kos_boolean = (data['class']==kospi_or_kosdaq)
+        if kospi_or_kosdaq: # None 이 아닐 경우
+            kos_boolean = (data['class']==kospi_or_kosdaq)
+        else: # None인 경우
+            kos_boolean = True
 
         # 시가총액 상위 몇개의 기업을 가져올 것인지
         collected_data = data[days_boolean & kos_boolean]
@@ -209,16 +213,24 @@ def selecting_with_conditions(year, kospi_or_kosdaq, how_many_comp):
 
 # 모든 업종별 종목정보 csv 저장하고, 
 # 각 업종별 조건에 맞는 데이터만 뽑아서 또 csv로 저장해주는 모듈
-def collecting_all():
+def collecting_all(company_lists=None):
+    # 리스트엔 업종 풀네임으로 적어준다.
     category_list = collect_links_of_each_field()
-    # 카테고리명과 카테고리별 링크를 담아준다.
-    # ex ) [https://www.f~~~~, 반도체및반도체장비] ... 이런 식으로
     category_links = []
-    for category in category_list:
-        category_links.append(category[0])
+    #print(category_list[category_list['name']=='반도체와반도체장비'])
+    if company_lists: # 리스트를 입력받았을 경우
+        for company in company_lists:
+            # 회사명에 해당하는 링크만 들어감.
+            category_links.append(category_list[category_list['name']==company]['link'].item())
+    else: # 리스트 입력받지 않았을 경우
+        # 카테고리명과 카테고리별 링크를 담아준다.
+        # ex ) [https://www.f~~~~, 반도체및반도체장비] ... 이런 식으로
+        category_list = category_list[category_list['name']!='기타']
+        for category in category_list['link']:
+            category_links.append(category)
+        #url = 'https://finance.naver.com/sise/sise_group_detail.nhn?type=upjong&no=202'
 
-    url = 'https://finance.naver.com/sise/sise_group_detail.nhn?type=upjong&no=202'
-    for url in category_links:
+    for url in category_links: #모든 업종 다 가져옴
         industrial_field, pd_data = collect_data_from_naver(url)
         # 해당 url에 들어가 데이터를 수집하고, 업종명과 해당 업종들의 종목정보가 담긴 판다스데이터프레임 산출해준다.
         store_total_data(industrial_field, pd_data)
@@ -245,5 +257,5 @@ def collecting_all():
 
 
 # 모든 업종별 조건처리 맞는 데이터들 가져오기
-#collecting_all()
-selecting_with_conditions(10, 'kospi', 5)
+collecting_all(['반도체와반도체장비','기계','자동차','자동차부품','가정용기기와용품'])
+selecting_with_conditions(10, 5)
