@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import *
 import win32com.client
 import sqlite3
 import time
+import pandas as pd
 
 # 복수 종목 실시간 조회 샘플 (조회는 없고 실시간만 있음)
 class CpEvent:
@@ -155,23 +156,24 @@ class MyWindow(QMainWindow):
         self.objCur = []
 
     def btnStart_clicked(self):
-        self.StopSubscribe();
+        self.StopSubscribe()
 
         # 요청 종목 배열
         conn = sqlite3.connect("stock_price(cur).db", isolation_level=None)
         c = conn.cursor()
         c.execute("select code from code_name")
-        codes = c.fetchall()
+        #codes = c.fetchall()
         # c.fetchall 의 데이터타입은 list
         codes_list = []
-        count11 = 0
+        data = pd.read_csv('./naver_data/반도체와반도체장비.csv')
+        codes = list(data['code'])
+        #count11 = 0
         for code in codes:
-            count11 += 1
-            codes_list.append(code[0])
-            if count11>199 :
-                break
+            #count11 += 1
+            codes_list.append(code)
+            #if count11>199 :
+            #    break
         # 실시간데이터는 199개까지로 제한. 200개 부턴 안됨.
-
         # 위에는 DB에서 종목코드 가져오는 코딩. 제대로 작동함.
         codes = codes_list # 모든 종목코드를 담음.
         # 이거 db에서 가져올까?
