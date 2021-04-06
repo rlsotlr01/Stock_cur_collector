@@ -14,37 +14,31 @@ class CpEvent:
     # 11시 12분 시작 - 1시 18분 종료 sk바사 10917 naver 19779 삼성생명 2495 삼성전자 23260 영원무역 711 삼성화재 1845
     def OnReceived(self):
         conn = sqlite3.connect("stock_price(cur).db", isolation_level=None)
-
-        code = self.client.GetHeaderValue(0)  # 초
-        name = self.client.GetHeaderValue(1)  # 초
+        code = self.client.GetHeaderValue(0)  # 코드
+        name = self.client.GetHeaderValue(1)  # 종목명
+        diff = self.client.GetHeaderValue(2)  # 전일대비
+        cur_price = self.client.GetHeaderValue(4)  # 시가
+        high_price = self.client.GetHeaderValue(5)  # 고가
+        low_price = self.client.GetHeaderValue(6)  # 저가
+        sell_call = self.client.GetHeaderValue(7)  # 매도호가
+        buy_call = self.client.GetHeaderValue(8)  # 매수호가
+        acc_vol = self.client.GetHeaderValue(9)  # 누적거래량
+        pred_price = self.client.GetHeaderValue(13)  # 현재가 또는 예상체결가
+        deal_state = self.client.GetHeaderValue(14)  # 체결상태(체결가 방식)
+        acc_sell_deal_vol = self.client.GetHeaderValue(15)  # 누적매도체결수량(체결가방식)
+        acc_buy_deal_vol = self.client.GetHeaderValue(16)  # 누적매수체결수량(체결가방식)
+        moment_deal_vol = self.client.GetHeaderValue(17)  # 순간체결수량
         timess1 = time.strftime('%Y%m%d')
-        timess = timess1+str(self.client.GetHeaderValue(18))  # 년월일시분초
-        cur_price = self.client.GetHeaderValue(4)
-        high_price = self.client.GetHeaderValue(5)
-        low_price = self.client.GetHeaderValue(6)
-        sell_call = self.client.GetHeaderValue(7)
-        buy_call = self.client.GetHeaderValue(8)
-        acc_vol = self.client.GetHeaderValue(9)
-        pred_price = self.client.GetHeaderValue(13)  # 현재가
-        deal_state = self.client.GetHeaderValue(14)
-        acc_sell_deal_vol = self.client.GetHeaderValue(15)
-        acc_buy_deal_vol = self.client.GetHeaderValue(16)
-        moment_deal_vol = self.client.GetHeaderValue(17)
-        exp_price_com_flag = self.client.GetHeaderValue(19)
-        market_diff_flag = self.client.GetHeaderValue(20)
-        market_oot_vol = self.client.GetHeaderValue(21)
-        acc_call_sell_deal_vol = self.client.GetHeaderValue(27)
-        acc_call_buy_deal_vol = self.client.GetHeaderValue(28)
+        date_time_sec = timess1 + str(self.client.GetHeaderValue(18))  # 시간(초)
+        exFlag = self.client.GetHeaderValue(19)  # 예상체결가구분플래그
+        market_diff_flag = self.client.GetHeaderValue(20)  # 장구분플래그
 
-        # 일도 넣으면 좋을듯. 일에다가 timess 을 더해서 시간데이터로 하자.
-        exFlag = self.client.GetHeaderValue(19)  # 예상체결 플래그
-
-        diff = self.client.GetHeaderValue(2)  # 대비
-        cVol = self.client.GetHeaderValue(17)  # 순간체결수량
-        vol = self.client.GetHeaderValue(9)  # 거래량
         c = conn.cursor()
         c.execute("CREATE TABLE IF NOT EXISTS " + code +
-                  "(COMPNAME text, PRICE integer, TIME text, DIFF integer, BUYNUM integer, BUYNUM_ACC integer)")
+                  " (diff real, cur_price integer, high_price integer, low_price integer"
+                  ", sell_call integer, buy_call integer, acc_vol integer, pred_price integer, deal_state text, acc_sell_deal_vol integer"
+                  ", acc_buy_deal_vol integer , moment_deal_vol integer ,date_time_sec text, exFlag text, market_diff_flag text )")
+
         # 여기에 필요한 데이터에 따라 컬럼명 변경
         # 컬럼명 바꿔줘야 함.
         # time 은 무조건
@@ -57,17 +51,23 @@ class CpEvent:
 
             #c.execute("CREATE TABLE IF NOT EXISTS BUYING_NUM "
             #          "(COMPNAME text, TIME text, PRICE integer, DIFF integer, BUYNUM integer, BUYNUM_ACC integer)")
-            print("실시간(예상체결)", name, timess, "*", cur_price, "대비", diff, "체결량", cVol, "거래량", vol, "데이터개수", self.cnt2)
-            print(timess)
+            c.execute(
+                "INSERT OR IGNORE INTO " + code + " VALUES( ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                ((diff,cur_price,high_price,low_price,sell_call,
+                  buy_call,acc_vol,pred_price,deal_state,acc_sell_deal_vol,
+                  acc_buy_deal_vol,moment_deal_vol,
+                  date_time_sec,exFlag,market_diff_flag)))
 
-            c.execute(sql_sent, (name, timess, cur_price, diff, cVol, vol))
+
             # 여기도
 
         elif (exFlag == ord('2')):  # 장중(체결)
-            print(timess)
-            print("실시간(장중 체결)", name, timess, cur_price, "대비", diff, "체결량", cVol, "거래량", vol, "데이터개수", self.cnt2)
-            c.execute(sql_sent,
-                      (name, timess, cur_price, diff, cVol, vol))
+            c.execute(
+                "INSERT OR IGNORE INTO " + code + " VALUES( ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                ((diff, cur_price, high_price, low_price, sell_call,
+                  buy_call, acc_vol, pred_price, deal_state, acc_sell_deal_vol,
+                  acc_buy_deal_vol, moment_deal_vol,
+                  date_time_sec, exFlag, market_diff_flag)))
             # 여기다가 넣을거 추가해야 함.
 
 class CpStockCur:
