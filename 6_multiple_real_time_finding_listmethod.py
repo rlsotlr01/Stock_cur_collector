@@ -161,7 +161,7 @@ class MyWindow(QMainWindow):
         # 요청 종목 배열
         conn = sqlite3.connect("stock_price(cur).db", isolation_level=None)
         c = conn.cursor()
-        c.execute("select code from code_name")
+        #c.execute("select code from code_name")
         #codes = c.fetchall()
         # c.fetchall 의 데이터타입은 list
         codes_list = []
