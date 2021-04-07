@@ -43,9 +43,6 @@ class CpEvent:
         # 여기에 필요한 데이터에 따라 컬럼명 변경
         # 컬럼명 바꿔줘야 함.
         # time 은 무조건
-
-        sql_sent = "INSERT OR IGNORE INTO " + code + " VALUES( ?, ?, ?, ?, ?, ?)"
-        print(sql_sent)
         self.cnt2 += 1
 
         if (exFlag == ord('1')):  # 동시호가 시간 (예상체결)
